@@ -1,7 +1,7 @@
 import express from "express"
 import { connectdb } from "./config/db.js"
 import dotenv from "dotenv"
-import useroutes from './routes/useroutes.js'
+import useroutes from './config/routes/useroutes.js'
 import cors from 'cors'
 import path from 'path'
 
