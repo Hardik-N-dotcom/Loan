@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 const LoanApproval = () => {
@@ -9,7 +9,51 @@ const LoanApproval = () => {
   const [creditScore, setCreditScore] = useState('');
   const [result, setResult] = useState(null);
 
-  const calculateLoan = () => {
+  // Memoize expensive calculations
+  const calculatedResult = useMemo(() => {
+    const principal = parseFloat(amount);
+    const interestRate = parseFloat(rate);
+    const loanTerm = parseFloat(term);
+    const monthlyIncome = parseFloat(income);
+    const credit = parseInt(creditScore);
+
+    // Return null if any required field is empty
+    if (!principal || !interestRate || !loanTerm || !monthlyIncome || !credit) {
+      return null;
+    }
+
+    // Validation checks
+    if (principal < 1000 || interestRate <= 0 || interestRate > 50 || 
+        loanTerm <= 0 || loanTerm > 50 || monthlyIncome < 5000 || 
+        credit < 300 || credit > 900) {
+      return null;
+    }
+
+    const monthlyRate = interestRate / 100 / 12;
+    const numberOfPayments = loanTerm * 12;
+
+    const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
+                (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+
+    const totalPayment = emi * numberOfPayments;
+    const totalInterest = totalPayment - principal;
+
+    const maxAffordableEMI = monthlyIncome * 0.4;
+    const creditEligible = credit >= 700;
+    const emiEligible = emi <= maxAffordableEMI;
+    const approved = creditEligible && emiEligible;
+
+    return {
+      emi: emi.toFixed(2),
+      totalPayment: totalPayment.toFixed(2),
+      totalInterest: totalInterest.toFixed(2),
+      approved,
+      creditEligible,
+      emiEligible,
+    };
+  }, [amount, rate, term, income, creditScore]);
+
+  const calculateLoan = useCallback(() => {
     const principal = parseFloat(amount);
     const interestRate = parseFloat(rate);
     const loanTerm = parseFloat(term);
@@ -44,29 +88,8 @@ const LoanApproval = () => {
       return;
     }
 
-    const monthlyRate = interestRate / 100 / 12;
-    const numberOfPayments = loanTerm * 12;
-
-    const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
-                (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
-
-    const totalPayment = emi * numberOfPayments;
-    const totalInterest = totalPayment - principal;
-
-    const maxAffordableEMI = monthlyIncome * 0.4;
-    const creditEligible = credit >= 700;
-    const emiEligible = emi <= maxAffordableEMI;
-    const approved = creditEligible && emiEligible;
-
-    setResult({
-      emi: emi.toFixed(2),
-      totalPayment: totalPayment.toFixed(2),
-      totalInterest: totalInterest.toFixed(2),
-      approved,
-      creditEligible,
-      emiEligible,
-    });
-  };
+    setResult(calculatedResult);
+  }, [amount, rate, term, income, creditScore, calculatedResult]);
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-8 bg-white shadow-lg rounded-lg">
@@ -111,7 +134,7 @@ const LoanApproval = () => {
   );
 };
 
-const InputField = ({ label, value, onChange }) => (
+const InputField = React.memo(({ label, value, onChange }) => (
   <div>
     <label className="block font-medium mb-1">{label}</label>
     <input
@@ -121,6 +144,6 @@ const InputField = ({ label, value, onChange }) => (
       className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
     />
   </div>
-);
+));
 
 export default LoanApproval;

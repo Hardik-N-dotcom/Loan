@@ -1,31 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-
-import api from '../lib/axios';
+import { useUser } from '../contexts/UserContext';
 
 const Home = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-
-  const fetchUser = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    try {
-      const res = await api.get('/userinfo', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUser(res.data.user);
-    } catch (error) {
-      console.log("User not authenticated or token expired.");
-      localStorage.removeItem('token');
-    }
-  };
-
-  useEffect(() => {
-    fetchUser();
-  }, []);
+  const { user, loading } = useUser();
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-blue-100 via-white to-purple-100">
