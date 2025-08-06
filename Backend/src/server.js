@@ -6,6 +6,8 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import compression from 'compression';
+import helmet from 'helmet';
 
 dotenv.config();
 const app = express();
@@ -15,8 +17,12 @@ const PORT = process.env.PORT || 5000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Middleware
-app.use(express.json());
+// Security and Performance Middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable for development, configure for production
+}));
+app.use(compression()); // Enable gzip compression
+app.use(express.json({ limit: '10mb' })); // Set JSON payload limit
 
 // Enable CORS for development
 if (process.env.NODE_ENV !== "production") {

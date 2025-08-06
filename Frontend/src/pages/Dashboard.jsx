@@ -1,34 +1,13 @@
-import { useEffect, useState } from 'react';
-
+import React from 'react';
 import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar';
 import Logoutbtn from '../components/Logoutbtn';
 import { useNavigate } from 'react-router-dom';
-import api from '../lib/axios';
+import { useUser } from '../contexts/UserContext';
 
 const Dashboard = () => {
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
-
-  const fetchUserData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await api.get('/userinfo', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setUser(res.data.user);
-    } catch (error) {
-      toast.error('Invalid or expired token');
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    fetchUserData();
-  }, []);
+  const { user, loading } = useUser();
 
   const handleLoanClick = () => {
     navigate('/LoanApproval');
@@ -41,7 +20,9 @@ const Dashboard = () => {
       <div className="max-w-xl mx-auto mt-10 p-8 bg-white rounded-xl shadow-lg text-center">
         <h1 className="text-3xl font-bold text-purple-700 mb-4">Welcome to the Dashboard 🎉</h1>
 
-        {user ? (
+        {loading ? (
+          <p className="text-gray-500">Loading user data...</p>
+        ) : user ? (
           <>
             <div className="mb-6">
               <p className="text-lg text-gray-700"><strong>Name:</strong> {user.name}</p>
@@ -60,7 +41,7 @@ const Dashboard = () => {
             </div>
           </>
         ) : (
-          <p className="text-gray-500">Loading user data...</p>
+          <p className="text-gray-500">Please log in to access your dashboard.</p>
         )}
       </div>
     </div>
